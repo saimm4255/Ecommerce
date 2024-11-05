@@ -9,6 +9,15 @@ from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import RegisterSerializer, LoginSerializer
 
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from .models import Product, Category, Customer, Order
+from .serializers import ProductSerializer, CategorySerializer, CustomerSerializer, OrderSerializer
+
+
+
+
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
