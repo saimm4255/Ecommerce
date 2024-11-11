@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Customer Dashboard{% endblock %}
+{% block content %}
+<h2 class="text-center">Customer Dashboard</h2>
+<div class="card p-4">
+    <p>Total Orders: {{ total_orders }}</p>
+    <ul>
+        {% for order in order_history %}
+        <li>Order ID: {{ order }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

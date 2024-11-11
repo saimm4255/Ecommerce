@@ -1,0 +1,21 @@
+{% extends 'store/base.html' %}
+{% block title %}Checkout{% endblock %}
+{% block content %}
+<h2 class="text-center">Checkout</h2>
+<div class="card p-4">
+    <h5>Items in Your Cart:</h5>
+    <ul class="list-group mb-3">
+        {% for item in cart_items %}
+            <li class="list-group-item d-flex justify-content-between">
+                <div>
+                    <h6>{{ item.product.name }}</h6>
+                    <small>Quantity: {{ item.quantity }}</small>
+                </div>
+                <span>${{ item.price_per_unit * item.quantity }}</span>
+            </li>
+        {% endfor %}
+    </ul>
+    <h5 class="text-right">Total: ${{ total_price }}</h5>
+    <a href="" class="btn btn-success btn-block">Place Order</a>
+</div>
+{% endblock %}

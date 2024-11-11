@@ -3,10 +3,7 @@ from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.utils import timezone
 
 class User(AbstractUser):
-    ROLE_CHOICES = [
-        ('Admin', 'Admin'),
-        ('Customer', 'Customer'),
-    ]
+    ROLE_CHOICES = [('Admin', 'Admin'), ('Customer', 'Customer')]
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='Customer')
     groups = models.ManyToManyField(Group, related_name="custom_user_groups")
     user_permissions = models.ManyToManyField(Permission, related_name="custom_user_permissions")
