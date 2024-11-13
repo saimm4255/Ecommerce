@@ -2,16 +2,23 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
-from .models import Product, Category, Customer, Order
+from .models import Product, Category, Customer, Order, OrderItem  
 from .forms import RegisterForm, LoginForm
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import ProductSerializer, CategorySerializer, CustomerSerializer, OrderSerializer, RegisterSerializer, LoginSerializer
+from django.contrib import messages 
+from .models import User, Product, Category, Customer, Order, OrderItem  
+from django.db.models import Sum
+from .serializers import (
+    ProductSerializer, CategorySerializer, CustomerSerializer, OrderSerializer,
+    RegisterSerializer, LoginSerializer
+)
 
 
+@login_required(login_url='login-user')
 def product_list(request):
     products = Product.objects.all()
     return render(request, 'product_list.html', {'products': products})
@@ -26,34 +33,66 @@ def cart_view(request):
     cart_items = [{'product': p, 'quantity': cart[str(p.id)]} for p in products]
     return render(request, 'cart.html', {'cart_items': cart_items})
 
+
+
 def register_user(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if form.is_valid():
-            form.save()
-            return redirect('login')
+            user = form.save() 
+            Customer.objects.create(user=user)  
+            messages.success(request, 'Your account has been created successfully. You can now log in.')
+            return redirect('login-user')
     else:
         form = RegisterForm()
-    return render(request, 'register.html', {'form': form})
+    return render(request, 'registration.html', {'form': form})
 
 def login_user(request):
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
-            user = authenticate(username=form.cleaned_data['username'], password=form.cleaned_data['password'])
+            user = authenticate(
+                username=form.cleaned_data['username'],
+                password=form.cleaned_data['password']
+            )
             if user:
                 login(request, user)
-                return redirect('product-list')
+                messages.success(request, 'Welcome back! You have logged in successfully.')
+                
+                if user.role == 'Admin':
+                    return redirect('admin-dashboard')
+                else:
+                    return redirect('customer-dashboard')
+            else:
+                messages.error(request, 'Invalid username or password.')
     else:
         form = LoginForm()
     return render(request, 'login.html', {'form': form})
 
-@login_required
-def dashboard(request):
-    orders = Order.objects.filter(customer__user=request.user)
-    return render(request, 'dashboard.html', {'orders': orders})
 
-# DRF ViewSets and API Views
+def dashboard(request):
+    if request.user.is_staff:
+        return redirect('admin-dashboard')
+    return redirect('customer-dashboard')
+
+
+def checkout(request):
+   
+    if not isinstance(request.user, User):
+        messages.error(request, "An unexpected error occurred.")
+        return redirect('login-user')
+
+    try:
+       
+        customer = Customer.objects.get(user=request.user)
+        cart_items = OrderItem.objects.filter(order__customer=customer, order__status='Pending')
+        total_price = sum(item.price_per_unit * item.quantity for item in cart_items)
+        return render(request, 'checkout.html', {'cart_items': cart_items, 'total_price': total_price})
+    except Customer.DoesNotExist:
+        
+        messages.error(request, "You must complete your profile information before proceeding to checkout.")
+        return redirect('profile')
+
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
@@ -138,11 +177,3 @@ class AdminDashboardView(APIView):
             'total_sales': total_sales,
             'pending_orders': pending_orders
         })
-
-@login_required(login_url='login')
-def checkout(request):
-    customer = request.user.customer
-    cart_items = OrderItem.objects.filter(order__customer=customer, order__status='Pending')
-    total_price = sum(item.price_per_unit * item.quantity for item in cart_items)
-
-    return render(request, 'checkout.html', {'cart_items': cart_items, 'total_price': total_price})

@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     ProductViewSet, CategoryViewSet, CustomerViewSet, OrderViewSet,
     RegisterView, LoginView, LogoutView, ProfileView, CustomerDashboardView, AdminDashboardView,
-    product_list, product_detail, cart_view, register_user, login_user, dashboard
+    product_list, product_detail, cart_view, register_user, login_user, dashboard, checkout
 )
 
 router = DefaultRouter()
@@ -22,10 +22,12 @@ urlpatterns = [
     path('api/dashboard/customer/', CustomerDashboardView.as_view(), name='customer-dashboard'),
     path('api/dashboard/admin/', AdminDashboardView.as_view(), name='admin-dashboard'),
 
+  
     path('', product_list, name='product-list'),
     path('product/<int:product_id>/', product_detail, name='product-detail'),
     path('cart/', cart_view, name='cart'),
     path('auth/register/', register_user, name='register-user'),
     path('auth/login/', login_user, name='login-user'),
-    path('dashboard/', dashboard, name='dashboard'),
+    path('dashboard/', dashboard, name='dashboard'),  
+    path('checkout/', checkout, name='checkout'), 
 ]
